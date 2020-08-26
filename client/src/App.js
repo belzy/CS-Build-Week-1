@@ -1,15 +1,4 @@
-import React, { useEffect } from 'react';
-
-class GraphNode {
-
-  constructor() {
-    this._id = null;
-    this._alive = false;
-    this._pixels = [];
-  }
-
-}
-
+import React, { useEffect, useState } from 'react';
 
 // Utils
 const getPixelsFromScreenBuffer = screenBuffer => {
@@ -138,7 +127,7 @@ const getCellNeighbors = (cellIndex, totalCells, cellsPerRow) => {
   let bottomLeft;
   if (Math.floor((cellIndex - 1) / cellsPerRow) < Math.floor(cellIndex / cellsPerRow)) {
     bottomLeft = cellIndex + (cellsPerRow * 2) - 1;
-
+    
     if (bottomLeft >= totalCells) {
       bottomLeft = cellsPerRow - 1;
     }
@@ -146,7 +135,7 @@ const getCellNeighbors = (cellIndex, totalCells, cellsPerRow) => {
   } else {
     bottomLeft = cellIndex + (cellsPerRow - 1);
 
-    if (bottomLeft >= totalCells) {
+    if (bottomLeft > totalCells) {
       bottomLeft = (cellIndex - (Math.floor(cellIndex / cellsPerRow) * cellsPerRow)) - 1;
     }
 
@@ -154,7 +143,7 @@ const getCellNeighbors = (cellIndex, totalCells, cellsPerRow) => {
 
   // Set bottom neighbor
   let bottom;
-  if (cellIndex + cellsPerRow > totalCells) {
+  if (cellIndex + cellsPerRow >= totalCells) {
     bottom = cellIndex - (Math.floor(cellIndex / cellsPerRow) * cellsPerRow);
   } else {
     bottom = cellIndex + cellsPerRow;
@@ -173,12 +162,12 @@ const getCellNeighbors = (cellIndex, totalCells, cellsPerRow) => {
     bottomRight = cellIndex + (cellsPerRow + 1);
 
     if (bottomRight >= totalCells) {
-      bottomRight = (cellIndex - (Math.floor(cellIndex / cellsPerRow) * cellsPerRow)) - 1;
+      bottomRight = (cellIndex - (Math.floor(cellIndex / cellsPerRow) * cellsPerRow)) + 1;
     }
 
   }
 
-  return [topLeft, top, topRight, left, right, bottomLeft, bottom, bottomRight];
+  return [topRight, top, topLeft, left, right, bottomLeft, bottom, bottomRight];
 
 };
 
@@ -197,11 +186,36 @@ function App() {
     red:   [255, 0, 0, 255]
   };
 
+  const [activeCell, setActiveCell] = useState(150);
+
+  
+
   useEffect(() => {
 
     let ctx = canvasRef.getContext('2d');
     let imageData = ctx.getImageData(0, 0, canvasRef.width, canvasRef.height);
     let screenBuffer = imageData.data;
+
+     // Get clicked cell.
+     canvasRef.addEventListener('click', e => {
+
+      if (canvasRef) {
+        const rect = canvasRef.getBoundingClientRect();
+
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // (Math.floor(y / cellSize) * cellsPerRow) // Get row
+        // (Math.floor(x / cellSize)) // Get cell in row
+        // (Math.floor(y / cellSize) * cellsPerRow) + (Math.floor(x / cellSize)) // Get cell
+
+        const cellClicked = (Math.floor(y / cellSize) * cellsPerRow) + (Math.floor(x / cellSize));
+
+        setActiveCell(cellClicked);
+      }
+      
+    });
+    console.log(activeCell);
 
     const pixels = getPixelsFromScreenBuffer(screenBuffer);
     
@@ -234,26 +248,10 @@ function App() {
 
     }
 
-    // Get Cells
     // Get clicked cell
-    // Get a cells neighbers
 
-    // A cell should have a live/dead state.
-    // References to all the pixels inside the cell
-    // References to all its neighbors
-    // Research graph data structure
 
-    // const cellPixels = getCellPixels(70, canvasSize, cellSize);
-
-    // Sets cell color
-    // cellPixels.forEach(pixel => setPixelColor(pixels, pixel, black));
-
-  
-    // let cellIndex = 150;
-    // let cellIndex = 209;
-    // let cellIndex = 4875;
-    // let cellIndex = 4760 - 70;
-    let cellIndex = 4899 - 70;
+    let cellIndex = activeCell;
     cells[cellIndex]['pixels'].forEach(pixel => setPixelColor(pixels, pixel, black));
 
     cells[cellIndex]['neighbors'].forEach(neighborIndex => {
@@ -261,8 +259,6 @@ function App() {
       cells[neighborIndex]['pixels'].forEach(pixel => setPixelColor(pixels, pixel, black));
 
     });
-
-
 
     /******************************************************/
     // Flatten pixels.
@@ -283,7 +279,7 @@ function App() {
     // Apply changes to canvas.
     ctx.putImageData(imageData, 0, 0);
 
-  }, [canvasRef, colors]);
+  }, [canvasRef, colors, activeCell]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
