@@ -263,13 +263,6 @@ function App() {
     });
 
 
-    /**
-      cell = {
-        alive: false,
-        pixels: [1-19]
-        neighbors: [cellRef x8]
-      }
-    */
 
     /******************************************************/
     // Flatten pixels.
